@@ -1,0 +1,10 @@
+# Upstart script for vEG
+description "vEG container"
+author "andrea@onlab.us"
+start on filesystem and started docker
+stop on runlevel [!2345]
+respawn
+
+script
+  /usr/local/sbin/start-veg-{{ s_tags[0] }}-{{ c_tags[0] }}.sh
+end script
