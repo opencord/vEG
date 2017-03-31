@@ -2,8 +2,8 @@
 - hosts: {{ instance_name }}
   gather_facts: False
   connection: ssh
-  user: ubuntu
-  sudo: yes
+  become_user: ubuntu
+
   vars:
       cdn_enable: {{ cdn_enable }}
       dnsdemux_ip: {{ dnsdemux_ip }}
@@ -99,7 +99,7 @@
       dest=/etc/resolv.conf
 
   - name: Verify if veg_stats_notifier ([] is to avoid capturing the shell process) cron job is already running
-    shell: pgrep -f [v]cpe_stats_notifier | wc -l
+    shell: pgrep -f [v]veg_stats_notifier | wc -l
     register: cron_job_pids_count
 
 #  - name: DEBUG

@@ -47,5 +47,5 @@ veg-synchronizer.py
 model-deps
 supervisor/veg-observer.conf
 run.sh
-vtn_veg_synchronizer_config
+veg_synchronizer_config
 veg_stats_notifier.py

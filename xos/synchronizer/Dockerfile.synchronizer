@@ -1,0 +1,9 @@
+FROM xosproject/xos-synchronizer-base
+
+ADD . /opt/xos/synchronizers/veg
+
+ENTRYPOINT []
+
+WORKDIR "/opt/xos/synchronizers/veg"
+
+CMD bash -c "cd /opt/xos/synchronizers/veg; ./run-from-api.sh"

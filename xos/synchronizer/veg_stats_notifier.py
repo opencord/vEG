@@ -138,13 +138,13 @@ rabbit_user='openstack'
 rabbit_password='80608318c273f348a7c3'
 rabbit_host='10.11.10.1'
 vegservice_rabbit_exchange='vegservice'
-cpe_publisher_id='veg_publisher'
+veg_publisher_id='veg_publisher'
 
 producer = None
 
 def setup_rabbit_mq_channel():
      global producer
-     global rabbit_user, rabbit_password, rabbit_host, vegservice_rabbit_exchange,cpe_publisher_id
+     global rabbit_user, rabbit_password, rabbit_host, vegservice_rabbit_exchange,veg_publisher_id
      vegservice_exchange = Exchange(vegservice_rabbit_exchange, "topic", durable=False)
      # connections/channels
      connection = BrokerConnection(rabbit_host, rabbit_user, rabbit_password)
@@ -154,23 +154,23 @@ def setup_rabbit_mq_channel():
      producer = Producer(channel, exchange=vegservice_exchange, routing_key='notifications.info')
      p = subprocess.Popen('hostname', shell=True, stdout=subprocess.PIPE)
      (hostname, error) = p.communicate()
-     cpe_publisher_id = cpe_publisher_id + '_on_' + hostname
-     logger.info('cpe_publisher_id=%s',cpe_publisher_id)
+     veg_publisher_id = veg_publisher_id + '_on_' + hostname
+     logger.info('veg_publisher_id=%s',veg_publisher_id)
 
-def publish_cpe_stats():
+def publish_veg_stats():
      global producer
-     global keystone_tenant_id, keystone_user_id, cpe_publisher_id
+     global keystone_tenant_id, keystone_user_id, veg_publisher_id
 
-     logger.debug('publish_cpe_stats invoked')
+     logger.debug('publish_veg_stats invoked')
 
      dockercontainers = get_all_docker_containers()
-     cpe_container_compute_stats = extract_compute_stats_from_all_vegs(dockercontainers)
-     cpe_container_dns_stats = extract_dns_stats_from_all_vegs(dockercontainers)
+     veg_container_compute_stats = extract_compute_stats_from_all_vegs(dockercontainers)
+     veg_container_dns_stats = extract_dns_stats_from_all_vegs(dockercontainers)
 
-     for k,v in cpe_container_dns_stats.iteritems():
+     for k,v in veg_container_dns_stats.iteritems():
           msg = {'event_type': 'veg',
                  'message_id':six.text_type(uuid.uuid4()),
-                 'publisher_id': cpe_publisher_id,
+                 'publisher_id': veg_publisher_id,
                  'timestamp':datetime.datetime.now().isoformat(),
                  'priority':'INFO',
                  'payload': {'veg_id':k,
@@ -196,7 +196,7 @@ def publish_cpe_stats():
                compute_payload['tenant_id'] = keystone_tenant_id
                msg = {'event_type': 'veg.compute.stats',
                       'message_id':six.text_type(uuid.uuid4()),
-                      'publisher_id': cpe_publisher_id,
+                      'publisher_id': veg_publisher_id,
                       'timestamp':datetime.datetime.now().isoformat(),
                       'priority':'INFO',
                       'payload': compute_payload 
@@ -207,7 +207,7 @@ def publish_cpe_stats():
           if 'cache_size' in v:
                msg = {'event_type': 'veg.dns.cache.size',
                       'message_id':six.text_type(uuid.uuid4()),
-                      'publisher_id': cpe_publisher_id,
+                      'publisher_id': veg_publisher_id,
                       'timestamp':datetime.datetime.now().isoformat(),
                       'priority':'INFO',
                       'payload': {'veg_id':k,
@@ -222,7 +222,7 @@ def publish_cpe_stats():
           if 'total_inserted_entries' in v:
                msg = {'event_type': 'veg.dns.total_inserted_entries',
                       'message_id':six.text_type(uuid.uuid4()),
-                      'publisher_id': cpe_publisher_id,
+                      'publisher_id': veg_publisher_id,
                       'timestamp':datetime.datetime.now().isoformat(),
                       'priority':'INFO',
                       'payload': {'veg_id':k,
@@ -237,7 +237,7 @@ def publish_cpe_stats():
           if 'replaced_unexpired_entries' in v:
                msg = {'event_type': 'veg.dns.replaced_unexpired_entries',
                       'message_id':six.text_type(uuid.uuid4()),
-                      'publisher_id': cpe_publisher_id,
+                      'publisher_id': veg_publisher_id,
                       'timestamp':datetime.datetime.now().isoformat(),
                       'priority':'INFO',
                       'payload': {'veg_id':k,
@@ -252,7 +252,7 @@ def publish_cpe_stats():
           if 'queries_forwarded' in v:
                msg = {'event_type': 'veg.dns.queries_forwarded',
                       'message_id':six.text_type(uuid.uuid4()),
-                      'publisher_id': cpe_publisher_id,
+                      'publisher_id': veg_publisher_id,
                       'timestamp':datetime.datetime.now().isoformat(),
                       'priority':'INFO',
                       'payload': {'veg_id':k,
@@ -267,7 +267,7 @@ def publish_cpe_stats():
           if 'queries_answered_locally' in v:
                msg = {'event_type': 'veg.dns.queries_answered_locally',
                       'message_id':six.text_type(uuid.uuid4()),
-                      'publisher_id': cpe_publisher_id,
+                      'publisher_id': veg_publisher_id,
                       'timestamp':datetime.datetime.now().isoformat(),
                       'priority':'INFO',
                       'payload': {'veg_id':k,
@@ -283,7 +283,7 @@ def publish_cpe_stats():
                for server in v['server_stats']:
                    msg = {'event_type': 'veg.dns.server.queries_sent',
                           'message_id':six.text_type(uuid.uuid4()),
-                          'publisher_id': cpe_publisher_id,
+                          'publisher_id': veg_publisher_id,
                           'timestamp':datetime.datetime.now().isoformat(),
                           'priority':'INFO',
                           'payload': {'veg_id':k,
@@ -298,7 +298,7 @@ def publish_cpe_stats():
 
                    msg = {'event_type': 'veg.dns.server.queries_failed',
                           'message_id':six.text_type(uuid.uuid4()),
-                          'publisher_id': cpe_publisher_id,
+                          'publisher_id': veg_publisher_id,
                           'timestamp':datetime.datetime.now().isoformat(),
                           'priority':'INFO',
                           'payload': {'veg_id':k,
@@ -312,7 +312,7 @@ def publish_cpe_stats():
                    logger.debug('Publishing veg.dns.server.queries_failed event: %s', msg)
 
 def periodic_publish():
-     publish_cpe_stats()
+     publish_veg_stats()
      #Publish every 5minutes
      threading.Timer(300, periodic_publish).start()
 

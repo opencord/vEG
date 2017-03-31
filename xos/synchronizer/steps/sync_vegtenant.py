@@ -5,57 +5,36 @@ import sys
 import base64
 import time
 from urlparse import urlparse
-from django.db.models import F, Q
 from xos.config import Config
-from synchronizers.base.syncstep import SyncStep
-from synchronizers.base.ansible_helper import run_template_ssh
-from synchronizers.base.SyncInstanceUsingAnsible import SyncInstanceUsingAnsible
-from core.models import Service, Slice, Tag, ModelLink, CoarseTenant, Tenant, ServiceMonitoringAgentInfo
-from services.veg.models import VEGService, VEGTenant
+from synchronizers.new_base.SyncInstanceUsingAnsible import SyncInstanceUsingAnsible
+from synchronizers.new_base.modelaccessor import *
+from synchronizers.new_base.ansible_helper import run_template_ssh
 from xos.logger import Logger, logging
-
-# Deal with configurations where the hpc service is not onboarded
-try:
-    from services.hpc.models import HpcService, CDNPrefix
-    hpc_service_onboarded=True
-except:
-    hpc_service_onboarded=False
 
 # hpclibrary will be in steps/..
 parentdir = os.path.join(os.path.dirname(__file__),"..")
 sys.path.insert(0,parentdir)
 
-from broadbandshield import BBS
 
 logger = Logger(level=logging.INFO)
 
 ENABLE_QUICK_UPDATE=False
-
-CORD_USE_VTN = getattr(Config(), "networking_use_vtn", False)
 
 class SyncVEGTenant(SyncInstanceUsingAnsible):
     provides=[VEGTenant]
     observes=VEGTenant
     requested_interval=0
     template_name = "sync_vegtenant.yaml"
-    watches = [ModelLink(CoarseTenant,via='coarsetenant'), ModelLink(ServiceMonitoringAgentInfo,via='monitoringagentinfo')]
+    watches = [ModelLink(ServiceDependency, via='servicedependency'), ModelLink(ServiceMonitoringAgentInfo, via='monitoringagentinfo')]
 
     def __init__(self, *args, **kwargs):
         super(SyncVEGTenant, self).__init__(*args, **kwargs)
-
-    def fetch_pending(self, deleted):
-        if (not deleted):
-            objs = VEGTenant.get_tenant_objects().filter(Q(enacted__lt=F('updated')) | Q(enacted=None),Q(lazy_blocked=False))
-        else:
-            objs = VEGTenant.get_deleted_tenant_objects()
-
-        return objs
 
     def get_veg_service(self, o):
         if not o.provider_service:
             return None
 
-        vegs = VEGService.get_service_objects().filter(id=o.provider_service.id)
+        vegs = VEGService.objects.filter(id=o.provider_service.id)
         if not vegs:
             return None
 
@@ -66,7 +45,6 @@ class SyncVEGTenant(SyncInstanceUsingAnsible):
         # object itself. In the case of vEG, we need to know:
         #   1) the addresses of dnsdemux, to setup dnsmasq in the vEG
         #   2) CDN prefixes, so we know what URLs to send to dnsdemux
-        #   3) BroadBandShield server addresses, for parental filtering
         #   4) vlan_ids, for setting up networking in the vEG VM
 
         veg_service = self.get_veg_service(o)
@@ -83,59 +61,8 @@ class SyncVEGTenant(SyncInstanceUsingAnsible):
             if len(lines)>=2:
                 dnsdemux_ip = lines[0].strip()
                 cdn_prefixes = [x.strip() for x in lines[1:] if x.strip()]
-        elif hpc_service_onboarded:
-            # automatic CDN configuiration
-            #    it learns everything from CDN objects in XOS
-            #    not tested on pod.
-            if veg_service.backend_network_label:
-                # Connect to dnsdemux using the network specified by
-                #     veg_service.backend_network_label
-                for service in HpcService.objects.all():
-                    for slice in service.slices.all():
-                        if "dnsdemux" in slice.name:
-                            for instance in slice.instances.all():
-                                for ns in instance.ports.all():
-                                    if ns.ip and ns.network.labels and (veg_service.backend_network_label in ns.network.labels):
-                                        dnsdemux_ip = ns.ip
-                if not dnsdemux_ip:
-                    logger.info("failed to find a dnsdemux on network %s" % veg_service.backend_network_label,extra=o.tologdict())
-            else:
-                # Connect to dnsdemux using the instance's public address
-                for service in HpcService.objects.all():
-                    for slice in service.slices.all():
-                        if "dnsdemux" in slice.name:
-                            for instance in slice.instances.all():
-                                if dnsdemux_ip=="none":
-                                    try:
-                                        dnsdemux_ip = socket.gethostbyname(instance.node.name)
-                                    except:
-                                        pass
-                if not dnsdemux_ip:
-                    logger.info("failed to find a dnsdemux with a public address",extra=o.tologdict())
-
-            for prefix in CDNPrefix.objects.all():
-                cdn_prefixes.append(prefix.prefix)
 
         dnsdemux_ip = dnsdemux_ip or "none"
-
-        # Broadbandshield can either be set up internally, using veg_service.bbs_slice,
-        # or it can be setup externally using veg_service.bbs_server.
-
-        bbs_addrs = []
-        if veg_service.bbs_slice:
-            if veg_service.backend_network_label:
-                for bbs_instance in veg_service.bbs_slice.instances.all():
-                    for ns in bbs_instance.ports.all():
-                        if ns.ip and ns.network.labels and (veg_service.backend_network_label in ns.network.labels):
-                            bbs_addrs.append(ns.ip)
-            else:
-                logger.info("unsupported configuration -- bbs_slice is set, but backend_network_label is not",extra=o.tologdict())
-            if not bbs_addrs:
-                logger.info("failed to find any usable addresses on bbs_slice",extra=o.tologdict())
-        elif veg_service.bbs_server:
-            bbs_addrs.append(veg_service.bbs_server)
-        else:
-            logger.info("neither bbs_slice nor bbs_server is configured in the vEG",extra=o.tologdict())
 
         s_tags = []
         c_tags = []
@@ -167,11 +94,10 @@ class SyncVEGTenant(SyncInstanceUsingAnsible):
         fields = {"s_tags": s_tags,
                 "c_tags": c_tags,
                 "docker_remote_image_name": veg_service.docker_image_name,
-                "docker_local_image_name": veg_service.docker_image_name, # veg_service.docker_image_name.split("/",1)[1].split(":",1)[0],
+                "docker_local_image_name": veg_service.docker_image_name,
                 "docker_opts": " ".join(docker_opts),
                 "dnsdemux_ip": dnsdemux_ip,
                 "cdn_prefixes": cdn_prefixes,
-                "bbs_addrs": bbs_addrs,
                 "full_setup": full_setup,
                 "isolation": o.instance.isolation,
                 "safe_browsing_macs": safe_macs,
@@ -192,63 +118,6 @@ class SyncVEGTenant(SyncInstanceUsingAnsible):
 
         super(SyncVEGTenant, self).sync_fields(o, fields)
 
-        # now do all of our broadbandshield stuff...
-
-        service = self.get_veg_service(o)
-        if not service:
-            # Ansible uses the service's keypair in order to SSH into the
-            # instance. It would be bad if the slice had no service.
-
-            raise Exception("Slice %s is not associated with a service" % instance.slice.name)
-
-        # Make sure the slice is configured properly
-        if (service != o.instance.slice.service):
-            raise Exception("Slice %s is associated with some service that is not %s" % (str(instance.slice), str(service)))
-
-        # only enable filtering if we have a subscriber object (see below)
-        url_filter_enable = False
-
-        # for attributes that come from CordSubscriberRoot
-        if o.volt and o.volt.subscriber:
-            url_filter_enable = o.volt.subscriber.url_filter_enable
-            url_filter_level = o.volt.subscriber.url_filter_level
-            url_filter_users = o.volt.subscriber.devices
-
-        if service.url_filter_kind == "broadbandshield":
-            # disable url_filter if there are no bbs_addrs
-            if url_filter_enable and (not fields.get("bbs_addrs",[])):
-                logger.info("disabling url_filter because there are no bbs_addrs",extra=o.tologdict())
-                url_filter_enable = False
-
-            if url_filter_enable:
-                bbs_hostname = None
-                if service.bbs_api_hostname and service.bbs_api_port:
-                    bbs_hostname = service.bbs_api_hostname
-                else:
-                    # TODO: extract from slice
-                    bbs_hostname = "cordcompute01.onlab.us"
-
-                if service.bbs_api_port:
-                    bbs_port = service.bbs_api_port
-                else:
-                    bbs_port = 8018
-
-                if not bbs_hostname:
-                    logger.info("broadbandshield is not configured",extra=o.tologdict())
-                else:
-                    tStart = time.time()
-                    bbs = BBS(o.bbs_account, "123", bbs_hostname, bbs_port)
-                    bbs.sync(url_filter_level, url_filter_users)
-
-                    if o.hpc_client_ip:
-                        logger.info("associate account %s with ip %s" % (o.bbs_account, o.hpc_client_ip),extra=o.tologdict())
-                        bbs.associate(o.hpc_client_ip)
-                    else:
-                        logger.info("no hpc_client_ip to associate",extra=o.tologdict())
-
-                    logger.info("bbs update time %d" % int(time.time()-tStart),extra=o.tologdict())
-
-
     def run_playbook(self, o, fields):
         ansible_hash = hashlib.md5(repr(sorted(fields.items()))).hexdigest()
         quick_update = (o.last_ansible_hash == ansible_hash)
@@ -257,12 +126,10 @@ class SyncVEGTenant(SyncInstanceUsingAnsible):
             logger.info("quick_update triggered; skipping ansible recipe",extra=o.tologdict())
         else:
             if o.instance.isolation in ["container", "container_vm"]:
+                raise Exception("probably not implemented")
                 super(SyncVEGTenant, self).run_playbook(o, fields, "sync_vegtenant_new.yaml")
             else:
-                if CORD_USE_VTN:
-                    super(SyncVEGTenant, self).run_playbook(o, fields, template_name="sync_vegtenant_vtn.yaml")
-                else:
-                    super(SyncVEGTenant, self).run_playbook(o, fields)
+                super(SyncVEGTenant, self).run_playbook(o, fields, template_name="sync_vegtenant_vtn.yaml")
 
         o.last_ansible_hash = ansible_hash
 
@@ -305,4 +172,3 @@ class SyncVEGTenant(SyncInstanceUsingAnsible):
 
             template_name = "sync_monitoring_agent.yaml"
             super(SyncVEGTenant, self).run_playbook(obj, fields, template_name)
-        pass
