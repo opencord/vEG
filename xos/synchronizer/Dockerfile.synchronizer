@@ -12,9 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+# xosproject/veg-synchronizer
 FROM xosproject/xos-synchronizer-base:candidate
 
-ADD . /opt/xos/synchronizers/veg
+COPY . /opt/xos/synchronizers/veg
 
 ENTRYPOINT []
 

@@ -21,7 +21,6 @@ import sys
 import base64
 import time
 from urlparse import urlparse
-from xos.config import Config
 from synchronizers.new_base.SyncInstanceUsingAnsible import SyncInstanceUsingAnsible
 from synchronizers.new_base.modelaccessor import *
 from synchronizers.new_base.ansible_helper import run_template_ssh
@@ -47,7 +46,7 @@ class SyncVEGTenant(SyncInstanceUsingAnsible):
         super(SyncVEGTenant, self).__init__(*args, **kwargs)
 
     def get_veg_service(self, o):
-        if not o.provider_service:
+        if not o.owner:
             return None
 
         vegs = VEGService.objects.filter(id=o.provider_service.id)
@@ -86,10 +85,7 @@ class SyncVEGTenant(SyncInstanceUsingAnsible):
             s_tags.append(o.volt.s_tag)
             c_tags.append(o.volt.c_tag)
 
-        try:
-            full_setup = Config().observer_full_setup
-        except:
-            full_setup = True
+        full_setup = True
 
         safe_macs=[]
         if veg_service.url_filter_kind == "safebrowsing":
@@ -149,8 +145,15 @@ class SyncVEGTenant(SyncInstanceUsingAnsible):
 
         o.last_ansible_hash = ansible_hash
 
-    def delete_record(self, m):
-        pass
+    def sync_record(self, o):
+        if (not o.policed) or (o.policed<o.updated):
+            defer_sync("waiting on model policy")
+        super(SyncVEGTenant, self).sync_record(o)
+
+    def delete_record(self, o):
+        if (not o.policed) or (o.policed<o.updated):
+            defer_sync("waiting on model policy")
+        # do not call super, as we don't want to re-run the playbook
 
     def handle_service_monitoringagentinfo_watch_notification(self, monitoring_agent_info):
         if not monitoring_agent_info.service:
@@ -163,7 +166,7 @@ class SyncVEGTenant(SyncInstanceUsingAnsible):
 
         objs = VEGTenant.get_tenant_objects().all()
         for obj in objs:
-            if obj.provider_service.id != monitoring_agent_info.service.id:
+            if obj.owner.id != monitoring_agent_info.service.id:
                 logger.info("handle watch notifications for service monitoring agent info...ignoring because service attribute in monitoring agent info:%s is not matching" % (monitoring_agent_info))
                 return
 

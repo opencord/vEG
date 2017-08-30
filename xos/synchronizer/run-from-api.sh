@@ -1,4 +1,3 @@
-
 # Copyright 2017-present Open Networking Foundation
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,5 +13,4 @@
 # limitations under the License.
 
 
-export XOS_DIR=/opt/xos
-python veg-synchronizer.py  -C $XOS_DIR/synchronizers/veg/veg_from_api_config
+python veg-synchronizer.py
