@@ -32,12 +32,8 @@ topology_template:
           xproto: ./
           admin: admin.py
           admin_template: templates/vegadmin.html
-          synchronizer: synchronizer/manifest
-          synchronizer_run: veg-synchronizer.py
           tosca_custom_types: veg.yaml
           tosca_resource: tosca/resources/vegservice.py
-          rest_service: subdirectory:veg api/service/veg/vegservice.py
-          rest_tenant: subdirectory:cord api/tenant/cord/veg.py
           private_key: file:///opt/xos/key_import/veg_rsa
           public_key: file:///opt/xos/key_import/veg_rsa.pub
 
