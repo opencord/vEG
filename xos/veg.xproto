@@ -1,6 +1,7 @@
 option name = "veg";
 option kind = "vEG";
 option verbose_name = "vEG Service";
+option app_label = "veg";
 
 message VEGService (Service){
      optional string url_filter_kind = 1 [choices = "((None, 'None'), ('safebrowsing', 'Safe Browsing'), ('answerx', 'AnswerX'))", max_length = 30, content_type = "stripped",
