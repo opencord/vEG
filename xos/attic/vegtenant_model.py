@@ -297,7 +297,7 @@ def save_instance(self, instance):
             tag = Tag(service=self.provider_service, content_object=instance, name="vm_vrouter_tenant",value="%d" % vrouter.id)
             tag.save()
 
-def save(self, *args, **kwargs):
+def __xos_save_base(self, *args, **kwargs):
     if not self.creator:
         if not getattr(self, "caller", None):
             # caller must be set when creating a vEG since it creates a slice
@@ -308,6 +308,7 @@ def save(self, *args, **kwargs):
 
     super(VEGTenant, self).save(*args, **kwargs)
     model_policy_veg(self.pk)
+    return True     # Indicate that we called super.save()
 
 def delete(self, *args, **kwargs):
     self.cleanup_vrouter()
