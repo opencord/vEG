@@ -1,4 +1,3 @@
-
 # Copyright 2017-present Open Networking Foundation
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-
 FROM xosproject/xos-synchronizer-base:candidate
 
 ADD . /opt/xos/synchronizers/veg
@@ -21,5 +19,34 @@ ADD . /opt/xos/synchronizers/veg
 ENTRYPOINT []
 
 WORKDIR "/opt/xos/synchronizers/veg"
+
+# Label image
+ARG org_label_schema_schema_version=1.0
+ARG org_label_schema_name=veg-synchronizer
+ARG org_label_schema_version=unknown
+ARG org_label_schema_vcs_url=unknown
+ARG org_label_schema_vcs_ref=unknown
+ARG org_label_schema_build_date=unknown
+ARG org_opencord_vcs_commit_date=unknown
+ARG org_opencord_component_chameleon_version=unknown
+ARG org_opencord_component_chameleon_vcs_url=unknown
+ARG org_opencord_component_chameleon_vcs_ref=unknown
+ARG org_opencord_component_xos_version=unknown
+ARG org_opencord_component_xos_vcs_url=unknown
+ARG org_opencord_component_xos_vcs_ref=unknown
+
+LABEL org.label-schema.schema-version=$org_label_schema_schema_version \
+      org.label-schema.name=$org_label_schema_name \
+      org.label-schema.version=$org_label_schema_version \
+      org.label-schema.vcs-url=$org_label_schema_vcs_url \
+      org.label-schema.vcs-ref=$org_label_schema_vcs_ref \
+      org.label-schema.build-date=$org_label_schema_build_date \
+      org.opencord.vcs-commit-date=$org_opencord_vcs_commit_date \
+      org.opencord.component.chameleon.version=$org_opencord_component_chameleon_version \
+      org.opencord.component.chameleon.vcs-url=$org_opencord_component_chameleon_vcs_url \
+      org.opencord.component.chameleon.vcs-ref=$org_opencord_component_chameleon_vcs_ref \
+      org.opencord.component.xos.version=$org_opencord_component_xos_version \
+      org.opencord.component.xos.vcs-url=$org_opencord_component_xos_vcs_url \
+      org.opencord.component.xos.vcs-ref=$org_opencord_component_xos_vcs_ref
 
 CMD bash -c "cd /opt/xos/synchronizers/veg; ./run-from-api.sh"
