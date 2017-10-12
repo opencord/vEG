@@ -15,6 +15,7 @@
 from synchronizers.new_base.modelaccessor import *
 from synchronizers.new_base.model_policies.model_policy_tenantwithcontainer import TenantWithContainerPolicy, LeastLoadedNodeScheduler
 from synchronizers.new_base.exceptions import *
+import wrappers.vegtenant
 
 class VEGTenantPolicy(TenantWithContainerPolicy):
     model_name = "VEGTenant"
@@ -35,11 +36,9 @@ class VEGTenantPolicy(TenantWithContainerPolicy):
         if tenant.deleted:
             return
 
-<<<<<<< HEAD:xos/synchronizer/model_policies/model_policy_vegtenant.py
         if tenant.vrouter is None:
             vrouter = self.allocate_public_service_instance(address_pool_name="addresses_veg", subscriber_tenant=tenant)
             vrouter.save()
-
 
     def cleanup_orphans(self, tenant):
         # ensure vEG only has one AddressManagerServiceInstance

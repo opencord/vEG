@@ -33,7 +33,7 @@ topology_template:
           admin: admin.py
           admin_template: templates/vegadmin.html
           tosca_custom_types: veg.yaml
-          tosca_resource: tosca/resources/vegservice.py
+          tosca_resource: tosca/resources/vegservice.py, tosca/resources/vegtenant.py
           private_key: file:///opt/xos/key_import/veg_rsa
           public_key: file:///opt/xos/key_import/veg_rsa.pub
 
