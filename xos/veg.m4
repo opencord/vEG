@@ -50,3 +50,10 @@ node_types:
                 type: boolean
                 required: false
                 description: If true, then the hostname:port specified in docker_image_name will be treated as an insecure registry
+
+    tosca.nodes.VEGTenant:
+        derived_from: tosca.nodes.Root
+        description: >
+            A VEG Tenant.
+        properties:
+            xos_base_tenant_props

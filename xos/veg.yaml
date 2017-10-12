@@ -19,6 +19,7 @@ tosca_definitions_version: tosca_simple_yaml_1_0
 # compile this with "m4 veg.m4 > veg.yaml"
 
 # include macros
+
 # Note: Tosca derived_from isn't working the way I think it should, it's not
 #    inheriting from the parent template. Until we get that figured out, use
 #    m4 macros do our inheritance
@@ -113,3 +114,17 @@ node_types:
                 type: boolean
                 required: false
                 description: If true, then the hostname:port specified in docker_image_name will be treated as an insecure registry
+
+    tosca.nodes.VEGTenant:
+        derived_from: tosca.nodes.Root
+        description: >
+            A VEG Tenant.
+        properties:
+            kind:
+                type: string
+                default: generic
+                description: Kind of tenant
+            service_specific_id:
+                type: string
+                required: false
+                description: Service specific ID opaque to XOS but meaningful to service
