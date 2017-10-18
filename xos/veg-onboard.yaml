@@ -30,8 +30,6 @@ topology_template:
           # The following will concatenate with base_url automatically, if
           # base_url is non-null.
           xproto: ./
-          admin: admin.py
-          admin_template: templates/vegadmin.html
           tosca_custom_types: veg.yaml
           tosca_resource: tosca/resources/vegservice.py, tosca/resources/vegtenant.py
           private_key: file:///opt/xos/key_import/veg_rsa

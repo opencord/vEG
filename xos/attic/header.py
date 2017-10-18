@@ -25,10 +25,3 @@ from services.addressmanager.models import AddressManagerService, AddressManager
 import traceback
 from xos.exceptions import *
 from django.contrib.contenttypes.models import ContentType
-
-class ConfigurationError(Exception):
-    pass
-
-VEG_KIND = "vEG"
-CORD_SUBSCRIBER_KIND = "CordSubscriberRoot"
-
