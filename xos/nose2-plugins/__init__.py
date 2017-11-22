@@ -1,3 +1,4 @@
+
 # Copyright 2017-present Open Networking Foundation
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -11,15 +12,3 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
-name: veg-synchronizer
-accessor:
-  username: xosadmin@opencord.org
-  password: "@/opt/xos/services/veg/credentials/xosadmin@opencord.org"
-dependency_graph: "/opt/xos/synchronizers/veg/model-deps"
-steps_dir: "/opt/xos/synchronizers/veg/steps"
-sys_dir: "/opt/xos/synchronizers/veg/sys"
-model_policies_dir: "/opt/xos/synchronizers/veg/model_policies"
-wrappers:
-  - wrappers.veeserviceinstance
-  - wrappers.vegtenant
