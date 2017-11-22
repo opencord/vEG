@@ -15,7 +15,6 @@
 from synchronizers.new_base.modelaccessor import *
 from synchronizers.new_base.model_policies.model_policy_tenantwithcontainer import TenantWithContainerPolicy, LeastLoadedNodeScheduler
 from synchronizers.new_base.exceptions import *
-import wrappers.vegtenant
 
 class VEGTenantPolicy(TenantWithContainerPolicy):
     model_name = "VEGTenant"

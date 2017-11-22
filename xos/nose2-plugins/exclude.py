@@ -1,3 +1,4 @@
+
 # Copyright 2017-present Open Networking Foundation
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,14 +13,20 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-name: veg-synchronizer
-accessor:
-  username: xosadmin@opencord.org
-  password: "@/opt/xos/services/veg/credentials/xosadmin@opencord.org"
-dependency_graph: "/opt/xos/synchronizers/veg/model-deps"
-steps_dir: "/opt/xos/synchronizers/veg/steps"
-sys_dir: "/opt/xos/synchronizers/veg/sys"
-model_policies_dir: "/opt/xos/synchronizers/veg/model_policies"
-wrappers:
-  - wrappers.veeserviceinstance
-  - wrappers.vegtenant
+import logging
+import os
+
+from nose2.events import Plugin
+
+log = logging.getLogger('nose2.plugins.excludeignoredfiles')
+
+class ExcludeIgnoredFiles(Plugin):
+    commandLineSwitch = (None, 'exclude-ignored-files', 'Exclude that which should be excluded')
+
+    def matchPath(self, event):
+        if event.path.endswith(".py"):
+            text = open(event.path, "r").read()
+            if "test_framework: ignore" in text.lower():
+                log.info("Ignoring %s" % event.path)
+                event.handled = True
+                return False

@@ -25,8 +25,6 @@ from synchronizers.new_base.SyncInstanceUsingAnsible import SyncInstanceUsingAns
 from synchronizers.new_base.modelaccessor import *
 from synchronizers.new_base.ansible_helper import run_template_ssh
 from xos.logger import Logger, logging
-import wrappers.vegtenant
-import wrappers.veeserviceinstance
 
 # hpclibrary will be in steps/..
 parentdir = os.path.join(os.path.dirname(__file__),"..")
