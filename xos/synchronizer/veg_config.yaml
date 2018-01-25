@@ -12,13 +12,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-name: veg-synchronizer
+name: veg
 accessor:
   username: xosadmin@opencord.org
   password: "@/opt/xos/services/veg/credentials/xosadmin@opencord.org"
+required_models:
+  - VEGService
+  - VEGTenant
 dependency_graph: "/opt/xos/synchronizers/veg/model-deps"
 steps_dir: "/opt/xos/synchronizers/veg/steps"
 sys_dir: "/opt/xos/synchronizers/veg/sys"
+models_dir: "/opt/xos/synchronizers/veg/models"
 model_policies_dir: "/opt/xos/synchronizers/veg/model_policies"
 wrappers:
   - wrappers.veeserviceinstance
