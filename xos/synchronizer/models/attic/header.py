@@ -20,7 +20,6 @@ from django.forms.models import model_to_dict
 from django.db.models import *
 from operator import itemgetter, attrgetter, methodcaller
 from core.models import Tag
-from core.models.service import LeastLoadedNodeScheduler
 from services.addressmanager.models import AddressManagerService, AddressManagerServiceInstance
 import traceback
 from xos.exceptions import *
