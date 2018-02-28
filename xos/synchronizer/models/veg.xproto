@@ -16,5 +16,7 @@ message VEGService (Service){
 
 message VEGTenant (TenantWithContainer){
     option verbose_name = "vEG Tenant";
+    option owner_class_name="VEGService";
+
     optional string last_ansible_hash = 1 [db_index = False, max_length = 128, null = True, content_type = "stripped", blank = True];
 }
