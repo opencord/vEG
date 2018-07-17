@@ -1,1 +1,8 @@
-.idea/
+.idea
+*.pyc
+
+.coverage
+htmlcov
+coverage.xml
+nose2-junit.xml
+
